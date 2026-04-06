@@ -2,17 +2,18 @@ name: Push to ECR
 
 on:
   push:
-    branches: [ main ] # Trigger on push to the main branch
+    branches: [ main ]
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
-        uses: [actions/checkout@v4](https://github.com)
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        uses: [aws-actions/configure-aws-credentials@v4](https://github.com)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -20,16 +21,15 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: [aws-actions/amazon-ecr-login@v2](https://github.com/aws-actions/amazon-ecr-login)
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, Tag, and Push Image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-          IMAGE_TAG: ${{ github.sha }} # Uses the commit hash as the tag
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          # Optional: Also tag and push as 'latest'
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
