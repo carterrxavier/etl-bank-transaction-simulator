@@ -34,5 +34,5 @@ while True:
     obj_store.put(txn, key=key)
 
     print(json.dumps({"stored": True, "bucket": getattr(obj_store, "bucket", None), "key": key}), flush=True)
-    time.sleep(.1)
+    time.sleep(.5)
     
