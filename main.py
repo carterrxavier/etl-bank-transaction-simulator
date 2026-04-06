@@ -3,6 +3,13 @@ import random
 import time
 from datetime import datetime, timezone
 
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ModuleNotFoundError:
+    pass
+
 from app.models import User
 from app.generator import generate_transaction
 from app.injector import inject_anomaly

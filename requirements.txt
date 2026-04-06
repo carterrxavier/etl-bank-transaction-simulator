@@ -2,3 +2,4 @@ faker
 requests
 numpy
 boto3
+python-dotenv

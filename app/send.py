@@ -17,12 +17,19 @@ class LocalObjectStore:
         self.root = Path(root_dir)
         self.root.mkdir(parents=True, exist_ok=True)
 
-    def put(self, obj: dict, prefix: str = "") -> str:
-        key = f"{uuid.uuid4()}.json"
-        path = self.root / prefix / key if prefix else (self.root / key)
+    def put(self, obj: dict, key: Optional[str] = None, prefix: str = "") -> str:
+        """
+        - If `key` is provided, writes to that relative path (S3-like key).
+        - Otherwise generates a UUID filename, optionally under `prefix/`.
+        """
+        if key is None:
+            filename = f"{uuid.uuid4()}.json"
+            key = str(Path(prefix) / filename) if prefix else filename
+
+        path = self.root / key
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(obj) + "\n", encoding="utf-8")
-        return str(Path(prefix) / key) if prefix else key
+        return key
 
     def get(self, key: str) -> dict:
         path = self.root / key
@@ -53,7 +60,8 @@ class S3ObjectStore:
 
 
 def _s3_bucket_from_env() -> Optional[str]:
-    return os.environ.get("S3_BUCKET") or os.environ.get("AWS_S3_BUCKET")
+    bucket = os.environ.get("S3_BUCKET") or os.environ.get("AWS_S3_BUCKET")
+    return bucket.strip() if isinstance(bucket, str) else None
 
 
 def store():
@@ -71,10 +79,5 @@ def store():
         region = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION")
         return S3ObjectStore(bucket=bucket, region=region)
 
-    root = os.environ.get("LOCAL_S3_DIR", ".local_s3")
-    return LocalObjectStore(root_dir=root)
-
-
-def store() -> LocalObjectStore:
     root = os.environ.get("LOCAL_S3_DIR", ".local_s3")
     return LocalObjectStore(root_dir=root)
