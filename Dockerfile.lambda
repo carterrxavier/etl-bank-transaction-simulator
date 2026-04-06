@@ -7,6 +7,8 @@ RUN pip install -r requirements.txt -t .
 
 COPY app/ app/
 
-# Handler: module.function
+# Override handler per function in AWS (same image):
+#   Detector (S3 trigger): app.lambda_handler.handler
+#   Generator (schedule / invoke): app.generate_handler.handler
 CMD ["app.lambda_handler.handler"]
 
