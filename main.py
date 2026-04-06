@@ -14,5 +14,5 @@ while True:
     txn = generate_transaction(user)
     txn, anamoly_type = inject_anamoly(txn, user)
     print(json.dumps(txn), flush=True)
-    time.sleep(.5)
+    time.sleep(.1)
     

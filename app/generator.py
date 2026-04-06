@@ -16,4 +16,6 @@ def generate_transaction(user):
         "timestamp": datetime.now().isoformat(), # in UTC
         "merchant": fake.company(),
         "transaction_type": random.choice(['POS', 'ATM', 'Online']),
+        "fraud_flag": None,
+        "anamoly_type": None
     }
