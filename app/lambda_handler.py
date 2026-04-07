@@ -12,9 +12,47 @@ def _date_prefix(now: datetime) -> str:
     return f"{now:%Y/%m/%d}"
 
 
+def _iter_s3_objects(event: dict, bucket_override: str | None) -> list[tuple[str, str]]:
+    """
+    Returns a list of (bucket, key) pairs from supported event shapes.
+
+    Supported:
+    - S3 notification events: event["Records"][*].s3.bucket.name / s3.object.key
+    - EventBridge S3 Object Created events: event["detail"].bucket.name / event["detail"].object.key
+    """
+    objects: list[tuple[str, str]] = []
+
+    records = event.get("Records")
+    if isinstance(records, list) and records:
+        for rec in records:
+            if not isinstance(rec, dict):
+                continue
+            s3_info = rec.get("s3") or {}
+            if not isinstance(s3_info, dict):
+                continue
+            bucket = bucket_override or ((s3_info.get("bucket") or {}).get("name"))
+            key = (s3_info.get("object") or {}).get("key")
+            if bucket and key:
+                objects.append((bucket, key))
+        return objects
+
+    detail = event.get("detail")
+    if isinstance(detail, dict):
+        bucket = bucket_override or ((detail.get("bucket") or {}).get("name"))
+        key = (detail.get("object") or {}).get("key")
+        if bucket and key:
+            objects.append((bucket, key))
+
+    return objects
+
+
 def handler(event, context):  # AWS Lambda entrypoint
     """
     Triggered by S3 ObjectCreated events for keys under `transactions/`.
+
+    Supports both:
+    - S3 notification payloads (event["Records"][...])
+    - EventBridge S3 "Object Created" payloads (event["detail"]...)
 
     Downloads the transaction JSON, runs detection, and writes a fraud decision
     JSON to `fraud_decisions/YYYY/MM/DD/<decision_id>.json`.
@@ -22,18 +60,10 @@ def handler(event, context):  # AWS Lambda entrypoint
     region = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION")
     bucket_override = os.environ.get("S3_BUCKET") or os.environ.get("AWS_S3_BUCKET")
 
-    records = event.get("Records") or []
+    objects = _iter_s3_objects(event if isinstance(event, dict) else {}, bucket_override)
     results = []
 
-    for rec in records:
-        s3_info = (rec.get("s3") or {})
-        bucket = bucket_override or (s3_info.get("bucket") or {}).get("name")
-        key = (s3_info.get("object") or {}).get("key")
-
-        if not bucket or not key:
-            results.append({"ok": False, "error": "missing_bucket_or_key"})
-            continue
-
+    for bucket, key in objects:
         store = S3ObjectStore(bucket=bucket, region=region)
         txn = store.get(key)
 
