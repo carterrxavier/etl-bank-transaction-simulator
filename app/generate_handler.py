@@ -33,7 +33,7 @@ def _clamp_count(raw) -> int:
         n = int(raw)
     except (TypeError, ValueError):
         return 1
-    return max(1, min(n, 200))
+    return max(1, min(n, 500))
 
 
 def handler(event, context):  # AWS Lambda entrypoint (generator)
