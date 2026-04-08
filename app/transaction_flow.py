@@ -13,7 +13,7 @@ def _date_prefix(now: datetime) -> str:
 _users_cache: list | None = None
 
 
-def users_pool(size: int = 99999) -> list:
+def users_pool(size: int = 999999) -> list:
     """Lazily built pool of synthetic users (ids 1..size)."""
     global _users_cache
     if _users_cache is None:
