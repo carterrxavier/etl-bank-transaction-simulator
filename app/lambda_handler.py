@@ -76,11 +76,14 @@ def handler(event, context):  # AWS Lambda entrypoint
         update_user_state(txn, user)
 
         now = datetime.now(timezone.utc)
+        sim_type = txn.get("sim_anomaly_type")
         decision = {
             "decision_id": str(uuid.uuid4()),
             "transaction_id": txn.get("transaction_id"),
             "transaction_key": key,
             "user_id": txn.get("user_id"),
+            "sim_anomaly_type": sim_type,
+            "anomaly_injected": sim_type not in (None, "none"),
             "fraud_flag": fraud_flag,
             "detector": os.environ.get("DETECTOR_NAME", "rules_v1"),
             "evaluated_at": now.isoformat(),

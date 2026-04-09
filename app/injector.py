@@ -12,7 +12,7 @@ def inject_anomaly(transaction: dict, user) -> tuple[dict, str]:
     """
     anomaly_type = random.choices(
         ["none", "high_amount", "impossible_travel", "rapid_fire", "new_device"],
-        weights=[0.85, 0.05, 0.03, 0.04, 0.03],
+        weights=[0.90, 0.03, 0.01, 0.04, 0.02],
         k=1,
     )[0]
 
@@ -20,8 +20,8 @@ def inject_anomaly(transaction: dict, user) -> tuple[dict, str]:
         if "amount" in transaction and isinstance(transaction["amount"], (int, float)):
             transaction["amount"] = round(transaction["amount"] * 10, 2)
 
-    elif anomaly_type == "impossible_travel" and user.last_timestamp:
-        # Intentionally far away to induce "impossible travel" in detection.
+    elif anomaly_type == "impossible_travel":
+        # Intentionally far from US home (detector uses home or prior txn as baseline).
         transaction["latitude"] = random.uniform(35, 40)
         transaction["longitude"] = random.uniform(130, 140)
 

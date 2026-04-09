@@ -1,4 +1,5 @@
 faker
+zipcodes
 requests
 boto3
 python-dotenv

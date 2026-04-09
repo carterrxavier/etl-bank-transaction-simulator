@@ -1,5 +1,5 @@
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def _haversine_km(lat1, lon1, lat2, lon2) -> float:
@@ -52,12 +52,19 @@ def detect_fraud(transaction: dict, user) -> tuple[str, dict]:
         if hours < (1 / 60):  # < 1 minute
             flag = "rapid_fire"
 
-    if txn_ts and user.last_timestamp:
+    if txn_ts:
         lat = transaction.get("latitude")
         lon = transaction.get("longitude")
         if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
-            distance_km = _haversine_km(user.last_lat, user.last_lon, lat, lon)
-            hours = abs((txn_ts - user.last_timestamp).total_seconds()) / 3600.0
+            if user.last_timestamp:
+                ref_lat, ref_lon = user.last_lat, user.last_lon
+                ref_ts = user.last_timestamp
+            else:
+                # No history (e.g. stateless Lambda): assume customer was home 1h ago.
+                ref_lat, ref_lon = user.home_lat, user.home_lon
+                ref_ts = txn_ts - timedelta(hours=1)
+            distance_km = _haversine_km(ref_lat, ref_lon, lat, lon)
+            hours = abs((txn_ts - ref_ts).total_seconds()) / 3600.0
             speed_kmh = distance_km / max(hours, 0.01)
             features["distance_km"] = distance_km
             features["speed_kmh"] = speed_kmh
