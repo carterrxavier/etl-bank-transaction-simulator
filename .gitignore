@@ -88,9 +88,8 @@ ipython_config.py
 #env
 .env
 
-#data, only for local development. upload to s3 for production manually.
-#file too large to commit.
-data/user_profiles.json
+# User profiles (simulation): large JSON; generate locally — see README.
+app/data/user_profiles.json
 
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
