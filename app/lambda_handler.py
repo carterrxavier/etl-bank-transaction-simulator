@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 
 from app.detector import detect_fraud, update_user_state
-from app.models import User
+from app.models import User, _profiles_bucket
 from app.send import S3ObjectStore
 
 
@@ -61,6 +61,11 @@ def handler(event, context):  # AWS Lambda entrypoint
     bucket_override = os.environ.get("S3_BUCKET") or os.environ.get("AWS_S3_BUCKET")
 
     objects = _iter_s3_objects(event if isinstance(event, dict) else {}, bucket_override)
+    # Lambda has no .env; profile JSON loads from S3 using the same bucket as transactions.
+    # If S3_BUCKET / AWS_S3_BUCKET / USER_PROFILES_BUCKET is unset, use the trigger bucket.
+    if objects and not _profiles_bucket():
+        os.environ["S3_BUCKET"] = objects[0][0]
+
     results = []
 
     for bucket, key in objects:
