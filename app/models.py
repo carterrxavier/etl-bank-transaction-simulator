@@ -9,6 +9,9 @@ _profiles_by_id: dict[int, dict[str, Any]] | None = None
 
 
 def _profiles_path() -> Path:
+    override = os.environ.get("USER_PROFILES_JSON_PATH")
+    if override:
+        return Path(override).expanduser().resolve()
     return Path(__file__).resolve().parent / "data" / "user_profiles.json"
 
 
@@ -48,8 +51,8 @@ def _load_profiles_from_local_file() -> dict[int, dict[str, Any]]:
     path = _profiles_path()
     if not path.is_file():
         raise FileNotFoundError(
-            f"Missing user profiles: {path}. Set S3 bucket env for auto-load, or run "
-            "scripts/generate_user_profiles.py"
+            f"Missing user profiles: {path}. Set S3 bucket env for auto-load, set "
+            "USER_PROFILES_JSON_PATH for a local file, or run scripts/generate_user_profiles.py"
         )
     raw = json.loads(path.read_text(encoding="utf-8"))
     return _index_raw_profiles(raw)
@@ -106,7 +109,7 @@ def profile_count() -> int:
 
 
 class User:
-    """Synthetic customer; profiles from S3 (``users/…``) or local ``app/data/user_profiles.json``."""
+    """Synthetic customer; profiles from S3, local ``app/data/user_profiles.json``, or ``USER_PROFILES_JSON_PATH``."""
 
     def __init__(self, user_id: int):
         profiles = _load_profiles()

@@ -21,4 +21,6 @@ jobs:
           python -m pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Run tests
+        env:
+          USER_PROFILES_JSON_PATH: ${{ github.workspace }}/app/data/user_profiles_test.json
         run: python -m pytest
